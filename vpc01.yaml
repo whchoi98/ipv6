@@ -93,10 +93,10 @@ Parameters:
     Default: "c5.2xlarge"
     Description: EC2 Instance Type for Performance EC2.
 
-  KeyPair:
-    Description: "Keypair to access the EC2 Instance"
-    Type: "AWS::EC2::KeyPair::KeyName"
-    Default: "mykey"
+#  KeyPair:
+#    Description: "Keypair to access the EC2 Instance"
+#    Type: "AWS::EC2::KeyPair::KeyName"
+#    Default: "mykey"
 
   LatestAmiId:
     Type: "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>"
