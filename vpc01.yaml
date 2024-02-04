@@ -1068,51 +1068,6 @@ Resources:
 ############################################################################################
 ############################################################################################
 
-
-##############################################
-# Create-Private-EC2: VPC VPN EC2 Create     #
-##############################################
-
-  OpenSwanInstance1:
-    Type: AWS::EC2::Instance
-    DependsOn: PublicSubnetA
-    Properties:
-      SubnetId: !Ref PublicSubnetA
-      ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.1.11.100
-      InstanceType: !Ref InstanceType1
-      SecurityGroupIds: 
-        - Ref: OpenSWANSG
-      KeyName: !Ref KeyPair
-      IamInstanceProfile: !Ref InstanceProfileSSM
-      BlockDeviceMappings: 
-        - DeviceName: /dev/xvda
-          Ebs: 
-            VolumeSize: 10
-            VolumeType: gp3
-            Iops: 3000
-            DeleteOnTermination: true
-      Tags:
-        - Key: Name
-          Value: !Sub '${AWS::StackName}-OpenSWAN-10.1.11.100'
-      UserData:
-        Fn::Base64:
-          Fn::Sub: |
-            #!/bin/bash
-            sudo yum -y update
-            sudo yum -y install yum-utils 
-            sudo yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-            sudo yum -y install iotop iperf3 iptraf tcpdump git bash-completion 
-            sudo yum -y install httpd php mysql php-mysql 
-            sudo yum -y install python-pip
-            sudo yum -y install nethogs iftop lnav nmon tmux wireshark vsftpd ftp openswan
-            sudo systemctl start httpd
-            sudo systemctl enable httpd
-            cd /var/www/html/
-            sudo git clone https://github.com/whchoi98/ec2meta-webpage.git
-            sudo systemctl restart httpd
-            exit
-
 ##############################################
 # Create-Public-EC2: VPC Public EC2 Create  #
 ##############################################
@@ -1795,8 +1750,14 @@ Outputs:
     Export:
       Name: !Sub "${AWS::StackName}-PrivateSubnetB"
 
-  OpenSwanInstance1:
-    Description: OpenSwan1PublicIP
-    Value: !GetAtt OpenSwanInstance1.PublicIp
+  PrivateSubnetARouteTable:
+    Description: PrivateSubnetARouteTableID
+    Value: !Ref PrivateSubnetARouteTable
     Export:
-      Name: !Sub "OpenSwan1PublicIP"
+      Name: !Sub "${AWS::StackName}-PrivateSubnetARouteTableID"
+
+  PrivateSubnetBRouteTable:
+    Description: PrivateSubnetBRouteTableID
+    Value: !Ref PrivateSubnetBRouteTable
+    Export:
+      Name: !Sub "${AWS::StackName}-PrivateSubnetBRouteTableID"
