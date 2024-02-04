@@ -1,4 +1,4 @@
-#########################################################################################################
+xx#########################################################################################################
 # 1 VPC, 1 NATGW, 2 AZ, 1 Public RT, 2 Private RT, 2 Publice Subnet, 2 Private Subnet, 2 Attach Subnet  #
 # ap-northeast-2 #
 #########################################################################################################
@@ -18,7 +18,9 @@ Metadata:
          - PrivateSubnetBBlock
          - AttachSubnetABlock
          - AttachSubnetBBlock
-         - InstanceType
+         - InstanceType1
+         - InstanceType2
+         - InstanceType3
 
 ############################################################################################
 ############################################################################################
@@ -43,52 +45,52 @@ Parameters:
 
   VPCCIDRBlock:
     Type: String
-    Default: 10.11.0.0/16
+    Default: 10.1.0.0/16
     Description: "The CIDR range for the VPC. This should be a valid private (RFC 1918) CIDR range."
 
   PublicSubnetABlock:
     Type: String
-    Default: 10.11.11.0/24
+    Default: 10.1.11.0/24
     Description: "CidrBlock for AZ A public subnet A within the VPC"
 
   PublicSubnetBBlock:
     Type: String
-    Default: 10.11.12.0/24
+    Default: 10.1.12.0/24
     Description: "CidrBlock for AZ B public subnet B within the VPC" 
 
   PrivateSubnetABlock:
     Type: String
-    Default: 10.11.21.0/24
+    Default: 10.1.21.0/24
     Description: "CidrBlock for AZ A private subnet A within the VPC"
 
   PrivateSubnetBBlock:
     Type: String
-    Default: 10.11.22.0/24
+    Default: 10.1.22.0/24
     Description: "CidrBlock for AZ B private subnet B within the VPC"
  
   AttachSubnetABlock:
     Type: String
-    Default: 10.11.251.0/24
+    Default: 10.1.251.0/24
     Description: "CidrBlock for AZ A TGW subnet A within the VPC"
 
   AttachSubnetBBlock:
     Type: String
-    Default: 10.11.252.0/24
+    Default: 10.1.252.0/24
     Description: "CidrBlock for AZ B TGW subnet B within the VPC"
 
   InstanceType1:
     Type: String
-    Default: "m5.2xlarge"
+    Default: "m5.xlarge"
     Description: EC2 Instance Type for Basic EC2.
 
   InstanceType2:
     Type: String
-    Default: "m5.8xlarge"
+    Default: "m5.2xlarge"
     Description: EC2 Instance Type for Mgmt EC2.
 
   InstanceType3:
     Type: String
-    Default: "c5.12xlarge"
+    Default: "c5.2xlarge"
     Description: EC2 Instance Type for Performance EC2.
 
   KeyPair:
@@ -1077,7 +1079,7 @@ Resources:
     Properties:
       SubnetId: !Ref PublicSubnetA
       ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.11.11.100
+      PrivateIpAddress: 10.1.11.100
       InstanceType: !Ref InstanceType1
       SecurityGroupIds: 
         - Ref: OpenSWANSG
@@ -1092,7 +1094,7 @@ Resources:
             DeleteOnTermination: true
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-OpenSWAN-10.11.11.100'
+          Value: !Sub '${AWS::StackName}-OpenSWAN-10.1.11.100'
       UserData:
         Fn::Base64:
           Fn::Sub: |
@@ -1121,7 +1123,7 @@ Resources:
     Properties:
       SubnetId: !Ref PublicSubnetA
       ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.11.11.101
+      PrivateIpAddress: 10.1.11.101
       InstanceType: !Ref InstanceType1
       SecurityGroupIds: 
         - Ref: PublicEC2SG
@@ -1136,7 +1138,7 @@ Resources:
             DeleteOnTermination: true
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-Public-10.11.11.101'
+          Value: !Sub '${AWS::StackName}-Public-10.1.11.101'
       UserData:
         Fn::Base64:
           Fn::Sub: |
@@ -1161,7 +1163,7 @@ Resources:
     Properties:
       SubnetId: !Ref PublicSubnetA
       ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.11.11.102
+      PrivateIpAddress: 10.1.11.102
       InstanceType: !Ref InstanceType1
       SecurityGroupIds: 
         - Ref: PublicEC2SG
@@ -1176,7 +1178,7 @@ Resources:
             DeleteOnTermination: true
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-Public-10.11.11.102'
+          Value: !Sub '${AWS::StackName}-Public-10.1.11.102'
       UserData:
         Fn::Base64:
           Fn::Sub: |
@@ -1201,7 +1203,7 @@ Resources:
     Properties:
       SubnetId: !Ref PublicSubnetA
       ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.11.11.103
+      PrivateIpAddress: 10.1.11.103
       InstanceType: !Ref InstanceType1
       SecurityGroupIds: 
         - Ref: PublicEC2SG
@@ -1216,7 +1218,7 @@ Resources:
             DeleteOnTermination: true
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-Public-10.11.11.103'
+          Value: !Sub '${AWS::StackName}-Public-10.1.11.103'
       UserData:
         Fn::Base64:
           Fn::Sub: |
@@ -1241,7 +1243,7 @@ Resources:
     Properties:
       SubnetId: !Ref PublicSubnetA
       ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.11.11.104
+      PrivateIpAddress: 10.1.11.104
       InstanceType: !Ref InstanceType1
       SecurityGroupIds: 
         - Ref: PublicEC2SG
@@ -1256,7 +1258,7 @@ Resources:
             DeleteOnTermination: true
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-Public-10.11.11.104'
+          Value: !Sub '${AWS::StackName}-Public-10.1.11.104'
       UserData:
         Fn::Base64:
           Fn::Sub: |
@@ -1281,7 +1283,7 @@ Resources:
     Properties:
       SubnetId: !Ref PublicSubnetB
       ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.11.12.101
+      PrivateIpAddress: 10.1.12.101
       InstanceType: !Ref InstanceType1
       SecurityGroupIds: 
         - Ref: PublicEC2SG
@@ -1296,7 +1298,7 @@ Resources:
             DeleteOnTermination: true
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-Public-10.11.12.101'
+          Value: !Sub '${AWS::StackName}-Public-10.1.12.101'
       UserData:
         Fn::Base64:
           Fn::Sub: |
@@ -1321,7 +1323,7 @@ Resources:
     Properties:
       SubnetId: !Ref PublicSubnetB
       ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.11.12.102
+      PrivateIpAddress: 10.1.12.102
       InstanceType: !Ref InstanceType1
       SecurityGroupIds: 
         - Ref: PublicEC2SG
@@ -1336,7 +1338,7 @@ Resources:
             DeleteOnTermination: true
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-Public-10.11.12.102'
+          Value: !Sub '${AWS::StackName}-Public-10.1.12.102'
       UserData:
         Fn::Base64:
           Fn::Sub: |
@@ -1361,7 +1363,7 @@ Resources:
     Properties:
       SubnetId: !Ref PublicSubnetB
       ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.11.12.103
+      PrivateIpAddress: 10.1.12.103
       InstanceType: !Ref InstanceType1
       SecurityGroupIds: 
         - Ref: PublicEC2SG
@@ -1376,7 +1378,7 @@ Resources:
             DeleteOnTermination: true
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-Public-10.11.12.103'
+          Value: !Sub '${AWS::StackName}-Public-10.1.12.103'
       UserData:
         Fn::Base64:
           Fn::Sub: |
@@ -1401,7 +1403,7 @@ Resources:
     Properties:
       SubnetId: !Ref PublicSubnetB
       ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.11.12.104
+      PrivateIpAddress: 10.1.12.104
       InstanceType: !Ref InstanceType1
       SecurityGroupIds: 
         - Ref: PublicEC2SG
@@ -1416,7 +1418,7 @@ Resources:
             DeleteOnTermination: true
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-Public-10.11.12.104'
+          Value: !Sub '${AWS::StackName}-Public-10.1.12.104'
       UserData:
         Fn::Base64:
           Fn::Sub: |
@@ -1444,7 +1446,7 @@ Resources:
     Properties:
       SubnetId: !Ref PrivateSubnetA
       ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.11.21.101
+      PrivateIpAddress: 10.1.21.101
       InstanceType: !Ref InstanceType1
       SecurityGroupIds: 
         - Ref: PrivateEC2SG
@@ -1452,7 +1454,7 @@ Resources:
       IamInstanceProfile: !Ref InstanceProfileSSM
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-Private-10.11.21.101'
+          Value: !Sub '${AWS::StackName}-Private-10.1.21.101'
       UserData:
         Fn::Base64:
           Fn::Sub: |
@@ -1477,7 +1479,7 @@ Resources:
     Properties:
       SubnetId: !Ref PrivateSubnetA
       ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.11.21.102
+      PrivateIpAddress: 10.1.21.102
       InstanceType: !Ref InstanceType1
       SecurityGroupIds: 
         - Ref: PrivateEC2SG
@@ -1485,7 +1487,7 @@ Resources:
       IamInstanceProfile: !Ref InstanceProfileSSM
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-Private-10.11.21.102'
+          Value: !Sub '${AWS::StackName}-Private-10.1.21.102'
       UserData:
         Fn::Base64:
           Fn::Sub: |
@@ -1510,7 +1512,7 @@ Resources:
     Properties:
       SubnetId: !Ref PrivateSubnetA
       ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.11.21.103
+      PrivateIpAddress: 10.1.21.103
       InstanceType: !Ref InstanceType1
       SecurityGroupIds: 
         - Ref: PrivateEC2SG
@@ -1518,7 +1520,7 @@ Resources:
       IamInstanceProfile: !Ref InstanceProfileSSM
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-Private-10.11.21.103'
+          Value: !Sub '${AWS::StackName}-Private-10.1.21.103'
       UserData:
         Fn::Base64:
           Fn::Sub: |
@@ -1543,7 +1545,7 @@ Resources:
     Properties:
       SubnetId: !Ref PrivateSubnetA
       ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.11.21.104
+      PrivateIpAddress: 10.1.21.104
       InstanceType: !Ref InstanceType1
       SecurityGroupIds: 
         - Ref: PrivateEC2SG
@@ -1551,7 +1553,7 @@ Resources:
       IamInstanceProfile: !Ref InstanceProfileSSM
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-Private-10.11.21.104'
+          Value: !Sub '${AWS::StackName}-Private-10.1.21.104'
       UserData:
         Fn::Base64:
           Fn::Sub: |
@@ -1576,7 +1578,7 @@ Resources:
     Properties:
       SubnetId: !Ref PrivateSubnetB
       ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.11.22.101
+      PrivateIpAddress: 10.1.22.101
       InstanceType: !Ref InstanceType1
       SecurityGroupIds: 
         - Ref: PrivateEC2SG
@@ -1584,7 +1586,7 @@ Resources:
       IamInstanceProfile: !Ref InstanceProfileSSM
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-Private-10.11.22.101'
+          Value: !Sub '${AWS::StackName}-Private-10.1.22.101'
       UserData:
         Fn::Base64:
           Fn::Sub: |
@@ -1609,7 +1611,7 @@ Resources:
     Properties:
       SubnetId: !Ref PrivateSubnetB
       ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.11.22.102
+      PrivateIpAddress: 10.1.22.102
       InstanceType: !Ref InstanceType1
       SecurityGroupIds: 
         - Ref: PrivateEC2SG
@@ -1617,7 +1619,7 @@ Resources:
       IamInstanceProfile: !Ref InstanceProfileSSM
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-Private-10.11.22.102'
+          Value: !Sub '${AWS::StackName}-Private-10.1.22.102'
       UserData:
         Fn::Base64:
           Fn::Sub: |
@@ -1642,7 +1644,7 @@ Resources:
     Properties:
       SubnetId: !Ref PrivateSubnetB
       ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.11.22.103
+      PrivateIpAddress: 10.1.22.103
       InstanceType: !Ref InstanceType1
       SecurityGroupIds: 
         - Ref: PrivateEC2SG
@@ -1650,7 +1652,7 @@ Resources:
       IamInstanceProfile: !Ref InstanceProfileSSM
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-Private-10.11.22.103'
+          Value: !Sub '${AWS::StackName}-Private-10.1.22.103'
       UserData:
         Fn::Base64:
           Fn::Sub: |
@@ -1675,7 +1677,7 @@ Resources:
     Properties:
       SubnetId: !Ref PrivateSubnetB
       ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.11.22.104
+      PrivateIpAddress: 10.1.22.104
       InstanceType: !Ref InstanceType1
       SecurityGroupIds: 
         - Ref: PrivateEC2SG
@@ -1683,7 +1685,7 @@ Resources:
       IamInstanceProfile: !Ref InstanceProfileSSM
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-Private-10.11.22.104'
+          Value: !Sub '${AWS::StackName}-Private-10.1.22.104'
       UserData:
         Fn::Base64:
           Fn::Sub: |
@@ -1712,7 +1714,7 @@ Resources:
     Properties:
       SubnetId: !Ref PublicSubnetA
       ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.11.11.101
+      PrivateIpAddress: 10.1.11.101
       InstanceType: !Ref InstanceType1
       SecurityGroupIds: 
         - Ref: PublicEC2SG
@@ -1727,7 +1729,7 @@ Resources:
             DeleteOnTermination: true
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-Public-10.11.11.101'
+          Value: !Sub '${AWS::StackName}-Public-10.1.11.101'
       UserData:
         Fn::Base64:
           Fn::Sub: |
