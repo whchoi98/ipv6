@@ -18,9 +18,7 @@ Metadata:
          - PrivateSubnetBBlock
          - AttachSubnetABlock
          - AttachSubnetBBlock
-         - InstanceType1
-         - InstanceType2
-         - InstanceType3
+         - InstanceType
 
 ############################################################################################
 ############################################################################################
@@ -45,53 +43,43 @@ Parameters:
 
   VPCCIDRBlock:
     Type: String
-    Default: 10.1.0.0/16
+    Default: 10.111.0.0/16
     Description: "The CIDR range for the VPC. This should be a valid private (RFC 1918) CIDR range."
 
   PublicSubnetABlock:
     Type: String
-    Default: 10.1.11.0/24
+    Default: 10.111.11.0/24
     Description: "CidrBlock for AZ A public subnet A within the VPC"
 
   PublicSubnetBBlock:
     Type: String
-    Default: 10.1.12.0/24
+    Default: 10.111.12.0/24
     Description: "CidrBlock for AZ B public subnet B within the VPC" 
 
   PrivateSubnetABlock:
     Type: String
-    Default: 10.1.21.0/24
+    Default: 10.111.21.0/24
     Description: "CidrBlock for AZ A private subnet A within the VPC"
 
   PrivateSubnetBBlock:
     Type: String
-    Default: 10.1.22.0/24
+    Default: 10.111.22.0/24
     Description: "CidrBlock for AZ B private subnet B within the VPC"
  
   AttachSubnetABlock:
     Type: String
-    Default: 10.1.251.0/24
+    Default: 10.111.251.0/24
     Description: "CidrBlock for AZ A TGW subnet A within the VPC"
 
   AttachSubnetBBlock:
     Type: String
-    Default: 10.1.252.0/24
+    Default: 10.111.252.0/24
     Description: "CidrBlock for AZ B TGW subnet B within the VPC"
 
-  InstanceType1:
+  InstanceType:
     Type: String
     Default: "m5.xlarge"
-    Description: EC2 Instance Type for Basic EC2.
-
-  InstanceType2:
-    Type: String
-    Default: "m5.2xlarge"
-    Description: EC2 Instance Type for Mgmt EC2.
-
-  InstanceType3:
-    Type: String
-    Default: "c5.2xlarge"
-    Description: EC2 Instance Type for Performance EC2.
+    Description: EC2 Instance Type for the VPC.
 
 #  KeyPair:
 #    Description: "Keypair to access the EC2 Instance"
@@ -188,28 +176,29 @@ Resources:
       - Key: Name
         Value: !Sub '${AWS::StackName}-NATGW-A'
 
-  NatGatewayBEIP:
-    DependsOn:
-    - AttachGateway
-    Type: 'AWS::EC2::EIP'
-    Properties:
-      Domain: vpc
-      Tags:
-        - Key: Name
-          Value: !Sub '${AWS::StackName}-NATGW-B-EIP'
+#  NatGatewayBEIP:
+#    DependsOn:
+#    - AttachGateway
+#    Type: 'AWS::EC2::EIP'
+#    Properties:
+#      Domain: vpc
+#      Tags:
+#        - Key: Name
+#          Value: !Sub '${AWS::StackName}-NATGW-B-EIP'
+#
+#  NatGatewayB:
+#    DependsOn:
+#    - NatGatewayAEIP
+#    - PublicSubnetB
+#    - AttachGateway
+#    Type: AWS::EC2::NatGateway
+#    Properties:
+#      AllocationId: !GetAtt 'NatGatewayBEIP.AllocationId'
+#      SubnetId: !Ref PublicSubnetB
+#      Tags:
+#      - Key: Name
+#        Value: !Sub '${AWS::StackName}-NATGW-B'
 
-  NatGatewayB:
-    DependsOn:
-    - NatGatewayBEIP
-    - PublicSubnetB
-    - AttachGateway
-    Type: AWS::EC2::NatGateway
-    Properties:
-      AllocationId: !GetAtt 'NatGatewayBEIP.AllocationId'
-      SubnetId: !Ref PublicSubnetB
-      Tags:
-      - Key: Name
-        Value: !Sub '${AWS::StackName}-NATGW-B'
 ############################################################################################
 ############################################################################################
 # Create Subnets and RouteTables              ###############################################
@@ -344,12 +333,12 @@ Resources:
   PrivateSubnetBRoute1:
     DependsOn:
     - AttachGateway
-    - NatGatewayB
+    - NatGatewayA
     Type: AWS::EC2::Route
     Properties:
       RouteTableId: !Ref PrivateSubnetBRouteTable
       DestinationCidrBlock: 0.0.0.0/0
-      NatGatewayId: !Ref NatGatewayB
+      NatGatewayId: !Ref NatGatewayA
 
 
 ################################################################################################
@@ -458,46 +447,6 @@ Resources:
 ############################################################################################
 ############################################################################################
 
-
-###############################################################################
-# Create-Security-Group: OpenSWAN Security Groups #
-###############################################################################
-
-  OpenSWANSG:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Open-up ports for ICMP and SSH,HTTP/S from All network
-      GroupName:  OpenSWANSG
-      VpcId: !Ref VPC
-      SecurityGroupIngress:
-        - IpProtocol: icmp
-          CidrIp: 0.0.0.0/0
-          FromPort: "-1"
-          ToPort: "-1"
-        - IpProtocol: tcp
-          CidrIp: 0.0.0.0/0
-          FromPort: "22"
-          ToPort: "22"
-        - IpProtocol: tcp
-          CidrIp: 0.0.0.0/0
-          FromPort: "4500"
-          ToPort: "4500"
-        - IpProtocol: udp
-          CidrIp: 0.0.0.0/0
-          FromPort: "500"
-          ToPort: "500"
-        - IpProtocol: tcp
-          CidrIp: 0.0.0.0/0
-          FromPort: "80"
-          ToPort: "80"
-        - IpProtocol: tcp
-          CidrIp: 0.0.0.0/0
-          FromPort: "443"
-          ToPort: "443"
-      Tags:
-        - Key: Name
-          Value: !Sub '${AWS::StackName}-OpenSWANSG'
-
 ###############################################################################
 # Create-Security-Group: Public EC2 Security Groups #
 ###############################################################################
@@ -559,37 +508,6 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${AWS::StackName}-PrivateSG'
-
-###############################################################################
-# Create-Security-Group: Locust EC2 Security Groups #
-###############################################################################
-
-  LocustEC2SG:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Open-up ports for ICMP and SSH,HTTP/S from All network
-      GroupName: LocustEC2SG
-      VpcId: !Ref VPC
-      SecurityGroupIngress:
-        - IpProtocol: icmp
-          CidrIp: 0.0.0.0/0
-          FromPort: "-1"
-          ToPort: "-1"
-        - IpProtocol: tcp
-          CidrIp: 0.0.0.0/0
-          FromPort: "22"
-          ToPort: "22"
-        - IpProtocol: tcp
-          CidrIp: 0.0.0.0/0
-          FromPort: "80"
-          ToPort: "80"
-        - IpProtocol: tcp
-          CidrIp: 0.0.0.0/0
-          FromPort: "443"
-          ToPort: "443"
-      Tags:
-        - Key: Name
-          Value: !Sub '${AWS::StackName}-LocustSG'
 
 ###############################################################################
 # Create-Security-Group: ALB Security Groups #
@@ -685,6 +603,7 @@ Resources:
 ######################################################################
   InternetALB1: 
     Type: "AWS::ElasticLoadBalancingV2::LoadBalancer"
+    DependsOn: AttachGateway
     Properties: 
       Name: !Sub "${AWS::StackName}-InternetALB1"
       Tags: 
@@ -755,6 +674,7 @@ Resources:
 ######################################################################
   InternetALB2: 
     Type: "AWS::ElasticLoadBalancingV2::LoadBalancer"
+    DependsOn: AttachGateway
     Properties: 
       Name: !Sub "${AWS::StackName}-InternetALB2"
       Tags: 
@@ -824,6 +744,7 @@ Resources:
 ######################################################################
   PrivateALB1: 
     Type: "AWS::ElasticLoadBalancingV2::LoadBalancer"
+    DependsOn: AttachGateway
     Properties: 
       Name: !Sub "${AWS::StackName}-PrivateALB1"
       Tags: 
@@ -893,6 +814,7 @@ Resources:
 ######################################################################
   InternetNLB1: 
     Type: "AWS::ElasticLoadBalancingV2::LoadBalancer"
+    DependsOn: AttachGateway
     Properties: 
       Name: !Sub "${AWS::StackName}-InternetNLB1"
       Type: network
@@ -942,6 +864,7 @@ Resources:
 ######################################################################
   InternetNLB2: 
     Type: "AWS::ElasticLoadBalancingV2::LoadBalancer"
+    DependsOn: AttachGateway
     Properties:
       Type: network 
       Name: !Sub "${AWS::StackName}-InternetNLB2"
@@ -1067,7 +990,7 @@ Resources:
 # Create EC2                                 ###############################################
 ############################################################################################
 ############################################################################################
-
+ 
 ##############################################
 # Create-Public-EC2: VPC Public EC2 Create  #
 ##############################################
@@ -1078,11 +1001,11 @@ Resources:
     Properties:
       SubnetId: !Ref PublicSubnetA
       ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.1.11.101
-      InstanceType: !Ref InstanceType1
+      PrivateIpAddress: 10.111.11.101
+      InstanceType: !Ref InstanceType
       SecurityGroupIds: 
         - Ref: PublicEC2SG
-      #KeyName: !Ref KeyPair
+#      KeyName: !Ref KeyPair
       IamInstanceProfile: !Ref InstanceProfileSSM
       BlockDeviceMappings: 
         - DeviceName: /dev/xvda
@@ -1093,7 +1016,7 @@ Resources:
             DeleteOnTermination: true
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-Public-10.1.11.101'
+          Value: !Sub '${AWS::StackName}-Public-10.111.11.101'
       UserData:
         Fn::Base64:
           Fn::Sub: |
@@ -1118,11 +1041,11 @@ Resources:
     Properties:
       SubnetId: !Ref PublicSubnetA
       ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.1.11.102
-      InstanceType: !Ref InstanceType1
+      PrivateIpAddress: 10.111.11.102
+      InstanceType: !Ref InstanceType
       SecurityGroupIds: 
         - Ref: PublicEC2SG
-      #KeyName: !Ref KeyPair
+#      KeyName: !Ref KeyPair
       IamInstanceProfile: !Ref InstanceProfileSSM
       BlockDeviceMappings: 
         - DeviceName: /dev/xvda
@@ -1133,7 +1056,7 @@ Resources:
             DeleteOnTermination: true
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-Public-10.1.11.102'
+          Value: !Sub '${AWS::StackName}-Public-10.111.11.102'
       UserData:
         Fn::Base64:
           Fn::Sub: |
@@ -1158,11 +1081,11 @@ Resources:
     Properties:
       SubnetId: !Ref PublicSubnetA
       ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.1.11.103
-      InstanceType: !Ref InstanceType1
+      PrivateIpAddress: 10.111.11.103
+      InstanceType: !Ref InstanceType
       SecurityGroupIds: 
         - Ref: PublicEC2SG
-      #KeyName: !Ref KeyPair
+#      KeyName: !Ref KeyPair
       IamInstanceProfile: !Ref InstanceProfileSSM
       BlockDeviceMappings: 
         - DeviceName: /dev/xvda
@@ -1173,7 +1096,7 @@ Resources:
             DeleteOnTermination: true
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-Public-10.1.11.103'
+          Value: !Sub '${AWS::StackName}-Public-10.111.11.103'
       UserData:
         Fn::Base64:
           Fn::Sub: |
@@ -1198,11 +1121,11 @@ Resources:
     Properties:
       SubnetId: !Ref PublicSubnetA
       ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.1.11.104
-      InstanceType: !Ref InstanceType1
+      PrivateIpAddress: 10.111.11.104
+      InstanceType: !Ref InstanceType
       SecurityGroupIds: 
         - Ref: PublicEC2SG
-      #KeyName: !Ref KeyPair
+#      KeyName: !Ref KeyPair
       IamInstanceProfile: !Ref InstanceProfileSSM
       BlockDeviceMappings: 
         - DeviceName: /dev/xvda
@@ -1213,7 +1136,7 @@ Resources:
             DeleteOnTermination: true
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-Public-10.1.11.104'
+          Value: !Sub '${AWS::StackName}-Public-10.111.11.104'
       UserData:
         Fn::Base64:
           Fn::Sub: |
@@ -1238,11 +1161,11 @@ Resources:
     Properties:
       SubnetId: !Ref PublicSubnetB
       ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.1.12.101
-      InstanceType: !Ref InstanceType1
+      PrivateIpAddress: 10.111.12.101
+      InstanceType: !Ref InstanceType
       SecurityGroupIds: 
         - Ref: PublicEC2SG
-      #KeyName: !Ref KeyPair
+#      KeyName: !Ref KeyPair
       IamInstanceProfile: !Ref InstanceProfileSSM
       BlockDeviceMappings: 
         - DeviceName: /dev/xvda
@@ -1253,7 +1176,7 @@ Resources:
             DeleteOnTermination: true
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-Public-10.1.12.101'
+          Value: !Sub '${AWS::StackName}-Public-10.111.12.101'
       UserData:
         Fn::Base64:
           Fn::Sub: |
@@ -1278,11 +1201,11 @@ Resources:
     Properties:
       SubnetId: !Ref PublicSubnetB
       ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.1.12.102
-      InstanceType: !Ref InstanceType1
+      PrivateIpAddress: 10.111.12.102
+      InstanceType: !Ref InstanceType
       SecurityGroupIds: 
         - Ref: PublicEC2SG
-      #KeyName: !Ref KeyPair
+#      KeyName: !Ref KeyPair
       IamInstanceProfile: !Ref InstanceProfileSSM
       BlockDeviceMappings: 
         - DeviceName: /dev/xvda
@@ -1293,7 +1216,7 @@ Resources:
             DeleteOnTermination: true
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-Public-10.1.12.102'
+          Value: !Sub '${AWS::StackName}-Public-10.111.12.102'
       UserData:
         Fn::Base64:
           Fn::Sub: |
@@ -1318,11 +1241,11 @@ Resources:
     Properties:
       SubnetId: !Ref PublicSubnetB
       ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.1.12.103
-      InstanceType: !Ref InstanceType1
+      PrivateIpAddress: 10.111.12.103
+      InstanceType: !Ref InstanceType
       SecurityGroupIds: 
         - Ref: PublicEC2SG
-      #KeyName: !Ref KeyPair
+#      KeyName: !Ref KeyPair
       IamInstanceProfile: !Ref InstanceProfileSSM
       BlockDeviceMappings: 
         - DeviceName: /dev/xvda
@@ -1333,7 +1256,7 @@ Resources:
             DeleteOnTermination: true
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-Public-10.1.12.103'
+          Value: !Sub '${AWS::StackName}-Public-10.111.12.103'
       UserData:
         Fn::Base64:
           Fn::Sub: |
@@ -1358,11 +1281,11 @@ Resources:
     Properties:
       SubnetId: !Ref PublicSubnetB
       ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.1.12.104
-      InstanceType: !Ref InstanceType1
+      PrivateIpAddress: 10.111.12.104
+      InstanceType: !Ref InstanceType
       SecurityGroupIds: 
         - Ref: PublicEC2SG
-      #KeyName: !Ref KeyPair
+#      KeyName: !Ref KeyPair
       IamInstanceProfile: !Ref InstanceProfileSSM
       BlockDeviceMappings: 
         - DeviceName: /dev/xvda
@@ -1373,7 +1296,7 @@ Resources:
             DeleteOnTermination: true
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-Public-10.1.12.104'
+          Value: !Sub '${AWS::StackName}-Public-10.111.12.104'
       UserData:
         Fn::Base64:
           Fn::Sub: |
@@ -1401,15 +1324,15 @@ Resources:
     Properties:
       SubnetId: !Ref PrivateSubnetA
       ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.1.21.101
-      InstanceType: !Ref InstanceType1
+      PrivateIpAddress: 10.111.21.101
+      InstanceType: !Ref InstanceType
       SecurityGroupIds: 
         - Ref: PrivateEC2SG
-      #KeyName: !Ref KeyPair
+#      KeyName: !Ref KeyPair
       IamInstanceProfile: !Ref InstanceProfileSSM
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-Private-10.1.21.101'
+          Value: !Sub '${AWS::StackName}-Private-10.111.21.101'
       UserData:
         Fn::Base64:
           Fn::Sub: |
@@ -1434,15 +1357,15 @@ Resources:
     Properties:
       SubnetId: !Ref PrivateSubnetA
       ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.1.21.102
-      InstanceType: !Ref InstanceType1
+      PrivateIpAddress: 10.111.21.102
+      InstanceType: !Ref InstanceType
       SecurityGroupIds: 
         - Ref: PrivateEC2SG
-      #KeyName: !Ref KeyPair
+#      KeyName: !Ref KeyPair
       IamInstanceProfile: !Ref InstanceProfileSSM
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-Private-10.1.21.102'
+          Value: !Sub '${AWS::StackName}-Private-10.111.21.102'
       UserData:
         Fn::Base64:
           Fn::Sub: |
@@ -1467,15 +1390,15 @@ Resources:
     Properties:
       SubnetId: !Ref PrivateSubnetA
       ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.1.21.103
-      InstanceType: !Ref InstanceType1
+      PrivateIpAddress: 10.111.21.103
+      InstanceType: !Ref InstanceType
       SecurityGroupIds: 
         - Ref: PrivateEC2SG
-      #KeyName: !Ref KeyPair
+#      KeyName: !Ref KeyPair
       IamInstanceProfile: !Ref InstanceProfileSSM
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-Private-10.1.21.103'
+          Value: !Sub '${AWS::StackName}-Private-10.111.21.103'
       UserData:
         Fn::Base64:
           Fn::Sub: |
@@ -1500,15 +1423,15 @@ Resources:
     Properties:
       SubnetId: !Ref PrivateSubnetA
       ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.1.21.104
-      InstanceType: !Ref InstanceType1
+      PrivateIpAddress: 10.111.21.104
+      InstanceType: !Ref InstanceType
       SecurityGroupIds: 
         - Ref: PrivateEC2SG
-      #KeyName: !Ref KeyPair
+#      KeyName: !Ref KeyPair
       IamInstanceProfile: !Ref InstanceProfileSSM
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-Private-10.1.21.104'
+          Value: !Sub '${AWS::StackName}-Private-10.111.21.104'
       UserData:
         Fn::Base64:
           Fn::Sub: |
@@ -1533,15 +1456,15 @@ Resources:
     Properties:
       SubnetId: !Ref PrivateSubnetB
       ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.1.22.101
-      InstanceType: !Ref InstanceType1
+      PrivateIpAddress: 10.111.22.101
+      InstanceType: !Ref InstanceType
       SecurityGroupIds: 
         - Ref: PrivateEC2SG
-      #KeyName: !Ref KeyPair
+#      KeyName: !Ref KeyPair
       IamInstanceProfile: !Ref InstanceProfileSSM
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-Private-10.1.22.101'
+          Value: !Sub '${AWS::StackName}-Private-10.111.22.101'
       UserData:
         Fn::Base64:
           Fn::Sub: |
@@ -1566,15 +1489,15 @@ Resources:
     Properties:
       SubnetId: !Ref PrivateSubnetB
       ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.1.22.102
-      InstanceType: !Ref InstanceType1
+      PrivateIpAddress: 10.111.22.102
+      InstanceType: !Ref InstanceType
       SecurityGroupIds: 
         - Ref: PrivateEC2SG
-      #KeyName: !Ref KeyPair
+#      KeyName: !Ref KeyPair
       IamInstanceProfile: !Ref InstanceProfileSSM
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-Private-10.1.22.102'
+          Value: !Sub '${AWS::StackName}-Private-10.111.22.102'
       UserData:
         Fn::Base64:
           Fn::Sub: |
@@ -1599,15 +1522,15 @@ Resources:
     Properties:
       SubnetId: !Ref PrivateSubnetB
       ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.1.22.103
-      InstanceType: !Ref InstanceType1
+      PrivateIpAddress: 10.111.22.103
+      InstanceType: !Ref InstanceType
       SecurityGroupIds: 
         - Ref: PrivateEC2SG
-      #KeyName: !Ref KeyPair
+#      KeyName: !Ref KeyPair
       IamInstanceProfile: !Ref InstanceProfileSSM
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-Private-10.1.22.103'
+          Value: !Sub '${AWS::StackName}-Private-10.111.22.103'
       UserData:
         Fn::Base64:
           Fn::Sub: |
@@ -1632,15 +1555,15 @@ Resources:
     Properties:
       SubnetId: !Ref PrivateSubnetB
       ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.1.22.104
-      InstanceType: !Ref InstanceType1
+      PrivateIpAddress: 10.111.22.104
+      InstanceType: !Ref InstanceType
       SecurityGroupIds: 
         - Ref: PrivateEC2SG
-      #KeyName: !Ref KeyPair
+#      KeyName: !Ref KeyPair
       IamInstanceProfile: !Ref InstanceProfileSSM
       Tags:
         - Key: Name
-          Value: !Sub '${AWS::StackName}-Private-10.1.22.104'
+          Value: !Sub '${AWS::StackName}-Private-10.111.22.104'
       UserData:
         Fn::Base64:
           Fn::Sub: |
@@ -1658,52 +1581,6 @@ Resources:
             sudo git clone https://github.com/whchoi98/ec2meta-webpage.git
             sudo systemctl restart httpd
             exit
-
-##############################################
-# Create-Locust-EC2 #
-##############################################
-
-  PublicAInstance1:
-    Type: AWS::EC2::Instance
-    DependsOn: PublicSubnetA
-    Properties:
-      SubnetId: !Ref PublicSubnetA
-      ImageId: !Ref LatestAmiId
-      PrivateIpAddress: 10.1.11.101
-      InstanceType: !Ref InstanceType1
-      SecurityGroupIds: 
-        - Ref: PublicEC2SG
-      #KeyName: !Ref KeyPair
-      IamInstanceProfile: !Ref InstanceProfileSSM
-      BlockDeviceMappings: 
-        - DeviceName: /dev/xvda
-          Ebs: 
-            VolumeSize: 10
-            VolumeType: gp3
-            Iops: 3000
-            DeleteOnTermination: true
-      Tags:
-        - Key: Name
-          Value: !Sub '${AWS::StackName}-Public-10.1.11.101'
-      UserData:
-        Fn::Base64:
-          Fn::Sub: |
-            #!/bin/bash
-            sudo yum -y update
-            sudo yum -y install yum-utils 
-            sudo yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-            sudo yum -y install iotop iperf3 iptraf tcpdump git bash-completion 
-            sudo yum -y install httpd php mysql php-mysql 
-            sudo yum -y install python-pip
-            sudo yum -y install nethogs iftop lnav nmon tmux wireshark vsftpd ftp
-            sudo systemctl start httpd
-            sudo systemctl enable httpd
-            cd /var/www/html/
-            sudo git clone https://github.com/whchoi98/ec2meta-webpage.git
-            sudo systemctl restart httpd
-            exit
-
-
 ###############
 # VPC Outputs #
 ###############
